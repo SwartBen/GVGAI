@@ -23,13 +23,13 @@ import tools.Utils;
  */
 public class Agent extends AbstractPlayer {
 
-    private double GAMMA = 0.90;
+    private double GAMMA = 0.864; //TO OPTIMISE 0.9
     private long BREAK_MS = 5;
-    private int SIMULATION_DEPTH = 7;
-    private int POPULATION_SIZE = 5;
+    private int SIMULATION_DEPTH = 9; //TO OPTIMISE 7
+    private int POPULATION_SIZE = 4; //TO OPTIMISE 5
 
-    private double RECPROB = 0.1;
-    private double MUT = (1.0 / SIMULATION_DEPTH);
+    private double RECPROB = 0.208; //TO OPTIMISE 0.1
+    private double MUT = (1.0 / SIMULATION_DEPTH); //TO OPTIMISE 
     private final int N_ACTIONS;
 
     private ElapsedCpuTimer timer;
@@ -62,8 +62,6 @@ public class Agent extends AbstractPlayer {
 
         N_ACTIONS = stateObs.getAvailableActions().size();
         initGenome(stateObs);
-
-
     }
 
 
@@ -105,6 +103,7 @@ public class Agent extends AbstractPlayer {
 
     }
 
+    //INITALISE POPULATION
     private void initGenome(StateObservation stateObs) {
 
         genome = new int[N_ACTIONS][POPULATION_SIZE][SIMULATION_DEPTH];

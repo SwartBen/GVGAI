@@ -23,6 +23,9 @@ public abstract class Player {
      */
     private int playerID;
 
+    public void genetic_operator_probabilties(double[] temp_individual) {
+    }
+
     /**
      * File where the actions played in a given game are stored.
      */

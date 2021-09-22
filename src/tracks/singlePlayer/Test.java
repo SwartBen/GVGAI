@@ -31,7 +31,7 @@ public class Test {
 		String[][] games = Utils.readGames(spGamesCollection);
 
 		//Game settings
-		boolean visuals = true;
+		boolean visuals = false;
 		int seed = new Random().nextInt();
 
 		// Game and level to play
@@ -53,11 +53,15 @@ public class Test {
 		// 2. This plays a game in a level by the controller.
 		double[] allScores = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 		double runningScore = 0;
+		System.out.println("RUNNING");
 		for(int i = 0; i < 5; i++) {
-			double[] score = ArcadeMachine.runOneGame(game, level0, visuals, sampleGAController, recordActionsFile, seed, 0);
-			allScores[i] = score[1];
-			runningScore = runningScore + score[1];
+			System.out.println(i);
+			//String level = game.replace(gameName, gameName + "_lvl" + i);
+			runningScore += ArcadeMachine.runOneGame(game, level0, visuals, sampleGAController, recordActionsFile, seed, 0)[1];
 		}
+		System.out.println("SCORE");
+		System.out.println(runningScore);
+
 		double mean = runningScore/5;
 
 		//Print mean 
