@@ -23,8 +23,11 @@ public abstract class Player {
      */
     private int playerID;
 
-    public void genetic_operator_probabilties(double[] temp_individual) {
-    }
+    public double GAMMA;
+    public double SIMULATION_DEPTH;
+    public double POPULATION_SIZE;
+    public double RECPROB;
+    public double MUT;
 
     /**
      * File where the actions played in a given game are stored.

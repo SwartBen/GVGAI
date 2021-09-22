@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
+import tracks.singlePlayer.assignment2.geneticAdvanced.Test;
 import tracks.singlePlayer.tools.Heuristics.StateHeuristic;
 import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 import core.game.StateObservation;
@@ -20,15 +21,16 @@ import tools.Utils;
  * Time: 15:17
  * This is a Java port from Tom Schaul's VGDL - https://github.com/schaul/py-vgdl
  */
+
 public class Agent extends AbstractPlayer {
 
-    private double GAMMA = 0.90; //TO OPTIMISE
+    private double GAMMA = 0.9; //TO OPTIMISE
     private long BREAK_MS = 5;
     private int SIMULATION_DEPTH = 7; //TO OPTIMISE
     private int POPULATION_SIZE = 5; //TO OPTIMISE
 
-    private double RECPROB = 0.1; //TO OPTIMISE
-    private double MUT = (1.0 / SIMULATION_DEPTH); //TO OPTIMISE
+    private double RECPROB = 0.208; //TO OPTIMISE
+    private double MUT = 1.0 / SIMULATION_DEPTH; //TO OPTIMISE
     private final int N_ACTIONS;
 
     private ElapsedCpuTimer timer;
@@ -39,16 +41,6 @@ public class Agent extends AbstractPlayer {
     protected Random randomGenerator;
 
     private int numSimulations;
-
-    
-    //Set this straight after controller been made
-    public void genetic_operator_probabilties(double[] temp_individual) {
-        GAMMA = temp_individual[0];
-        SIMULATION_DEPTH = (int)temp_individual[1];
-        POPULATION_SIZE = (int)temp_individual[2];
-        RECPROB = temp_individual[3];
-        MUT = temp_individual[4]; 
-    }
     
     /**
      * Public constructor with state observation and time due.
@@ -57,6 +49,20 @@ public class Agent extends AbstractPlayer {
      * @param elapsedTimer Timer for the controller creation.
      */
     public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        System.out.println("Agent created");
+        
+        GAMMA = Test.temp_individual[0];
+        SIMULATION_DEPTH = (int)Test.temp_individual[1];
+        POPULATION_SIZE = (int)Test.temp_individual[2];
+        RECPROB = Test.temp_individual[3];
+        MUT = Test.temp_individual[4];
+        
+        System.out.println(GAMMA);
+        System.out.println(SIMULATION_DEPTH);
+        System.out.println(POPULATION_SIZE);
+        System.out.println(RECPROB);
+        System.out.println(MUT);
+
 
         randomGenerator = new Random();
 
@@ -70,8 +76,8 @@ public class Agent extends AbstractPlayer {
         }
 
         N_ACTIONS = stateObs.getAvailableActions().size();
-        System.out.println("N_ACTIONS");
-        System.out.println(N_ACTIONS);
+        // System.out.println("N_ACTIONS");
+        // System.out.println(N_ACTIONS);
 
         initGenome(stateObs);
     }
@@ -86,16 +92,10 @@ public class Agent extends AbstractPlayer {
         do {
             b = (int) ((POPULATION_SIZE - 1) * randomGenerator.nextDouble());
         } while (a == b);
+        
 
-        if (a == actionGenome.length) a -= 1;
-        if (b == actionGenome.length) b -= 1;
 
         double score_a = simulate(stateObs, heuristic, actionGenome[a]);
-        // System.out.println("ERROR CHECKING");
-        // System.out.print(POPULATION_SIZE);
-        // System.out.print("  ");
-        // System.out.print(b);
-
         double score_b = simulate(stateObs, heuristic, actionGenome[b]);
 
         if (score_a > score_b) {
@@ -127,7 +127,9 @@ public class Agent extends AbstractPlayer {
     private void initGenome(StateObservation stateObs) {
 
         genome = new int[N_ACTIONS][POPULATION_SIZE][SIMULATION_DEPTH];
-
+        
+        // System.out.print("POP SIZE ");
+        // System.out.println(POPULATION_SIZE);
 
         // Randomize initial genome
         for (int i = 0; i < genome.length; i++) {
@@ -137,6 +139,13 @@ public class Agent extends AbstractPlayer {
                 }
             }
         }
+
+        // System.out.print("X SIZE ");
+        // System.out.println(genome.length);
+        // System.out.print("Y SIZE ");
+        // System.out.println(genome[0].length);
+        // System.out.print("Z SIZE ");
+        // System.out.println(genome[0][0].length);
     }
 
 
@@ -146,7 +155,7 @@ public class Agent extends AbstractPlayer {
         //System.out.println("depth" + depth);
         long remaining = timer.remainingTimeMillis();
         if (remaining < BREAK_MS) {
-            //System.out.println(remaining);
+            // System.out.println(remaining);
             throw new TimeoutException("Timeout");
         }
 

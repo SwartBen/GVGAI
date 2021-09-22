@@ -12,10 +12,13 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class Test {
 
+    public static double[] temp_individual = {0.9, 7, 5, 0.1, 0.14};
+    
     public static boolean fitness(double best, double temp) {
         if (temp > best) return true;
         return false;
     } 
+
     public static void main(String[] args) {
 
         System.out.println("Start Test");
@@ -46,7 +49,6 @@ public class Test {
         /*----------------- THE PROCEDURE ----------------------------*/
         //Initialise population - just start with the pre-set params I guess
         double[] best_individual = { 0.90, 7, 5, 0.10, 0.14 };
-        double[] temp_individual = { 0, 0, 0, 0, 0 };
         
         //Run intial population for each level on game track 0.
         double best_score = 0;
@@ -54,7 +56,7 @@ public class Test {
 
         for (int i = 0; i <= 4; i++) {
             String level = game.replace(gameName, gameName + "_lvl" + i);
-            best_score += ArcadeMachine.runOneGameOptimisedGA(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0, best_individual)[1];
+            best_score += ArcadeMachine.runOneGame(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0)[1];
         }
         System.out.println(best_score);
         
@@ -62,22 +64,16 @@ public class Test {
         while (gen_count < 5) {
             
             //Create new individual
-            temp_individual[0] = randomNumGen.nextDouble(); //gamma
-            temp_individual[1] = (int)ThreadLocalRandom.current().nextInt(8, 15); //sim depth
-            temp_individual[2] = (int)temp_individual[1] / 2;
-            temp_individual[3] = randomNumGen.nextDouble(); //recprob
-            temp_individual[4] = 1/temp_individual[1]; //mut
+            Test.temp_individual[0] = randomNumGen.nextDouble(); //gamma
+            Test.temp_individual[1] = (int)ThreadLocalRandom.current().nextInt(5, 20); //sim depth
+            Test.temp_individual[2] = (int)ThreadLocalRandom.current().nextInt(5, 20); //pop size 
+            Test.temp_individual[3] = randomNumGen.nextDouble(); //recprob
+            Test.temp_individual[4] = 1/Test.temp_individual[1]; //mut
 
-            System.out.println(temp_individual[0]);
-            System.out.println(temp_individual[1]);
-            System.out.println(temp_individual[2]);
-            System.out.println(temp_individual[3]);
-            System.out.println(temp_individual[4]);
-
-            //Run new solution for five runs
+            //Run new solution on each five levels
             for (int i = 0; i <= 4; i++) {
                 String level = game.replace(gameName, gameName + "_lvl" + i);
-                temp_score += ArcadeMachine.runOneGameOptimisedGA(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0, temp_individual)[1];
+                temp_score += ArcadeMachine.runOneGame(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0)[1];
             }
 
             if (fitness(best_score, temp_score)) {
