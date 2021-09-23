@@ -14,23 +14,15 @@ public class Test {
 
     public static double[] temp_individual = {0.9, 7, 5, 0.1, 0.14};
     
-    public static boolean fitness(double best, double temp) {
-        if (temp > best) return true;
-        return false;
-    } 
-
     public static void main(String[] args) {
 
-        System.out.println("Start Test");
-		//Track
-		String geneticOptimised = "tracks.singlePlayer.assignment2.geneticAdvanced.Agent";
+        System.out.println("START GENETIC ALGORITHM OPTIMISED");
 		
-		//Load available games
+        //Testing setup
+		String geneticOptimised = "tracks.singlePlayer.assignment2.geneticAdvanced.Agent";
 		String spGamesCollection =  "examples/all_games_sp.csv";
 		String[][] games = Utils.readGames(spGamesCollection);
-
-		//Game settings
-		boolean visuals = true;
+		boolean visuals = false;
 		int seed = new Random().nextInt();
 		
         int gameIdx = 0;
@@ -46,48 +38,76 @@ public class Test {
 
         
         
-        /*----------------- THE PROCEDURE ----------------------------*/
-        //Initialise population - just start with the pre-set params I guess
-        double[] best_individual = { 0.90, 7, 5, 0.10, 0.14 };
+        /*----------------- THE EVO ALGORITHM ----------------------------*/
         
-        //Run intial population for each level on game track 0.
+        //Initialise population - just start with the pre-set params I guess
+        double[] best_individual = Test.temp_individual;
         double best_score = 0;
         double temp_score = 0;
+        int successful_mutations = 1;
+        int mutations_count = 1;
+        double variation = 1;
+        double c = 0.8;
 
+        //POPULATUION INITALISATION
         for (int i = 0; i <= 4; i++) {
             String level = game.replace(gameName, gameName + "_lvl" + i);
             best_score += ArcadeMachine.runOneGame(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0)[1];
         }
-        System.out.println(best_score);
         
-        int gen_count = 0;
-        while (gen_count < 5) {
+        //RUN ALGORITHM
+        int gen_count = 1;
+        while (gen_count < 11) {
             
-            //Create new individual
-            Test.temp_individual[0] = randomNumGen.nextDouble(); //gamma
-            Test.temp_individual[1] = (int)ThreadLocalRandom.current().nextInt(5, 20); //sim depth
-            Test.temp_individual[2] = (int)ThreadLocalRandom.current().nextInt(5, 20); //pop size 
-            Test.temp_individual[3] = randomNumGen.nextDouble(); //recprob
-            Test.temp_individual[4] = 1/Test.temp_individual[1]; //mut
+            System.out.println("GENERATION: ");
+            System.out.println(gen_count);
+            
+            //Create new individual (mutation)
+            Test.temp_individual[0] = (Test.temp_individual[0] + Math.abs(randomNumGen.nextGaussian())*variation) % 1; //gamma
+            Test.temp_individual[1] = Math.floor(Test.temp_individual[1] + Math.abs(randomNumGen.nextGaussian())*variation); //sim depth
+            Test.temp_individual[2] = Math.floor(Test.temp_individual[2] + Math.abs(randomNumGen.nextGaussian())*variation); //pop size 
+            Test.temp_individual[3] = (Test.temp_individual[3] + Math.abs(randomNumGen.nextGaussian())*variation) % 1; //recprob
+            Test.temp_individual[4] = (1/Test.temp_individual[1]) % 1; //mut
 
-            //Run new solution on each five levels
+            //Run new individual
             for (int i = 0; i <= 4; i++) {
                 String level = game.replace(gameName, gameName + "_lvl" + i);
                 temp_score += ArcadeMachine.runOneGame(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0)[1];
             }
 
-            if (fitness(best_score, temp_score)) {
+            //Evaluate score of new individual compared to the best found
+            if (best_score < temp_score) {
                 best_score = temp_score;
                 best_individual = temp_individual;
+                successful_mutations++;
             }
+
+            //Co-Evolve mutation step size
+            if(successful_mutations/mutations_count > 1/5 )
+                variation /= c;
+            else if(successful_mutations/mutations_count < 1/5 )
+                variation *= c;
+
+            //Reset mutation step rule every 5 mutations
+            if(gen_count % 5 == 0) {
+                successful_mutations = 1;
+                mutations_count = 1;
+            }
+
             temp_score = 0;
             gen_count++;
         }
+        System.out.println("OPTIMISED PARAMETERS");
 
+        System.out.print("GAMMA: ");
         System.out.println(best_individual[0]);
+        System.out.print("SIM_DEPTH: ");
         System.out.println(best_individual[1]);
+        System.out.print("POP_SIZE: ");
         System.out.println(best_individual[2]);
+        System.out.print("RECPROB: ");
         System.out.println(best_individual[3]);
+        System.out.print("MUT: ");
         System.out.println(best_individual[4]);
 
 		// 3. This replays a game from an action file previously recorded
@@ -122,6 +142,6 @@ public class Test {
 		 //	ArcadeMachine.runGames(game, levels, M, sampleRHEAController, saveActions? actionFiles:null);
 		// }
 
-
+    return;
     }
 }
