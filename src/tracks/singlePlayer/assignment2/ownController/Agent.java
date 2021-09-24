@@ -1,44 +1,46 @@
 package tracks.singlePlayer.assignment2.ownController;
 
-import java.awt.Graphics2D;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.TimeoutException;
-
-import tracks.singlePlayer.tools.Heuristics.StateHeuristic;
-import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types;
 import tools.ElapsedCpuTimer;
-import tools.Utils;
+import tracks.singlePlayer.tools.Heuristics.StateHeuristic;
+import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 
-/**
- * Created with IntelliJ IDEA.
- * User: ssamot
- * Date: 26/02/14
- * Time: 15:17
- * This is a Java port from Tom Schaul's VGDL - https://github.com/schaul/py-vgdl
- */
+import java.util.*;
+
+@SuppressWarnings("FieldCanBeLocal")
 public class Agent extends AbstractPlayer {
 
-    private double GAMMA = 0.548; //TO OPTIMISE 0.9
-    private long BREAK_MS = 5;
-    private int SIMULATION_DEPTH = 12; //TO OPTIMISE 7
-    private int POPULATION_SIZE = 27; //TO OPTIMISE 5
+    // Parameters
+    private int POPULATION_SIZE = 10;
+    private int SIMULATION_DEPTH = 10;
+    private int CROSSOVER_TYPE = UNIFORM_CROSS;
+    private boolean REEVALUATE = false;
+    private int MUTATION = 1;
+    private int TOURNAMENT_SIZE = 2;
+    private int ELITISM = 1;
+    private StateHeuristic heuristic;
 
-    private double RECPROB = 0.263; //TO OPTIMISE 0.1
-    private double MUT = (1.0 / SIMULATION_DEPTH); //TO OPTIMISE 
-    private final int N_ACTIONS;
+    // Constants
+    private final long BREAK_MS = 10;
+    public static final double epsilon = 1e-6;
+    static final int POINT1_CROSS = 0;
+    static final int UNIFORM_CROSS = 1;
 
+    // Class vars
+    private Individual[] population, nextPop;
+    private int NUM_INDIVIDUALS;
+    private int N_ACTIONS;
+    private HashMap<Integer, Types.ACTIONS> action_mapping;
+    private Random randomGenerator;
+
+    // Budgets
     private ElapsedCpuTimer timer;
-
-    private int genome[][][];
-    private final HashMap<Integer, Types.ACTIONS> action_mapping;
-    private final HashMap<Types.ACTIONS, Integer> r_action_mapping;
-    protected Random randomGenerator;
-
-    private int numSimulations;
+    private double acumTimeTakenEval = 0,avgTimeTakenEval = 0, avgTimeTaken = 0, acumTimeTaken = 0;
+    private int numEvals = 0, numIters = 0;
+    private boolean keepIterating = true;
+    private long remaining;
 
     /**
      * Public constructor with state observation and time due.
@@ -47,173 +49,231 @@ public class Agent extends AbstractPlayer {
      * @param elapsedTimer Timer for the controller creation.
      */
     public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-
         randomGenerator = new Random();
-
-        action_mapping = new HashMap<Integer, Types.ACTIONS>();
-        r_action_mapping = new HashMap<Types.ACTIONS, Integer>();
-        int i = 0;
-        for (Types.ACTIONS action : stateObs.getAvailableActions()) {
-            action_mapping.put(i, action);
-            r_action_mapping.put(action, i);
-            i++;
-        }
-
-        N_ACTIONS = stateObs.getAvailableActions().size();
-        initGenome(stateObs);
+        heuristic = new WinScoreHeuristic(stateObs);
+        this.timer = elapsedTimer;
     }
 
+    @Override
+    public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        this.timer = elapsedTimer;
+        avgTimeTaken = 0;
+        acumTimeTaken = 0;
+        numEvals = 0;
+        acumTimeTakenEval = 0;
+        numIters = 0;
+        remaining = timer.remainingTimeMillis();
+        NUM_INDIVIDUALS = 0;
+        keepIterating = true;
 
-    double microbial_tournament(int[][] actionGenome, StateObservation stateObs, StateHeuristic heuristic) throws TimeoutException {
-        int a, b, c, W, L;
-        int i;
+        // INITIALISE POPULATION
+        init_pop(stateObs);
 
-
-        a = (int) ((POPULATION_SIZE - 1) * randomGenerator.nextDouble());
-        do {
-            b = (int) ((POPULATION_SIZE - 1) * randomGenerator.nextDouble());
-        } while (a == b);
-
-        double score_a = simulate(stateObs, heuristic, actionGenome[a]);
-        double score_b = simulate(stateObs, heuristic, actionGenome[b]);
-
-        if (score_a > score_b) {
-            W = a;
-            L = b;
-        } else {
-            W = b;
-            L = a;
+        // RUN EVOLUTION
+        remaining = timer.remainingTimeMillis();
+        while (remaining > avgTimeTaken && remaining > BREAK_MS && keepIterating) {
+            runIteration(stateObs);
+            remaining = timer.remainingTimeMillis();
         }
 
-        int LEN = actionGenome[0].length;
+        // RETURN ACTION
+        return get_best_action(population);
+    }
 
-        for (i = 0; i < LEN; i++) {
-            if (randomGenerator.nextDouble() < RECPROB) {
-                actionGenome[L][i] = actionGenome[W][i];
+    /**
+     * Run evolutionary process for one generation
+     * @param stateObs - current game state
+     */
+    private void runIteration(StateObservation stateObs) {
+        ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
+
+        if (REEVALUATE) {
+            for (int i = 0; i < ELITISM; i++) {
+                if (remaining > 2*avgTimeTakenEval && remaining > BREAK_MS) { // if enough time to evaluate one more individual
+                    evaluate(population[i], heuristic, stateObs);
+                } else {keepIterating = false;}
             }
         }
 
+        if (NUM_INDIVIDUALS > 1) {
+            for (int i = ELITISM; i < NUM_INDIVIDUALS; i++) {
+                if (remaining > 2*avgTimeTakenEval && remaining > BREAK_MS) { // if enough time to evaluate one more individual
+                    Individual newind;
 
-        for (i = 0; i < LEN; i++) {
-            if (randomGenerator.nextDouble() < MUT) actionGenome[L][i] = randomGenerator.nextInt(N_ACTIONS);
-        }
+                    newind = crossover();
+                    newind = newind.mutate(MUTATION);
 
-        return Math.max(score_a, score_b);
+                    // evaluate new individual, insert into population
+                    add_individual(newind, nextPop, i, stateObs);
 
-    }
-
-    //INITALISE POPULATION
-    private void initGenome(StateObservation stateObs) {
-
-        genome = new int[N_ACTIONS][POPULATION_SIZE][SIMULATION_DEPTH];
-
-
-        // Randomize initial genome
-        for (int i = 0; i < genome.length; i++) {
-            for (int j = 0; j < genome[i].length; j++) {
-                for (int k = 0; k < genome[i][j].length; k++) {
-                    genome[i][j][k] = randomGenerator.nextInt(N_ACTIONS);
+                    remaining = timer.remainingTimeMillis();
+                } else {
+                    keepIterating = false;
+                    break;
                 }
             }
+
+            Arrays.sort(nextPop, (o1, o2) -> {
+                if (o1 == null && o2 == null) {
+                    return 0;
+                }
+                if (o1 == null) {
+                    return 1;
+                }
+                if (o2 == null) {
+                    return -1;
+                }
+                return o1.compareTo(o2);
+            });
+
+        } else if (NUM_INDIVIDUALS == 1){
+            Individual newind = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator).mutate(MUTATION);
+            evaluate(newind, heuristic, stateObs);
+            if (newind.value > population[0].value)
+                nextPop[0] = newind;
         }
+
+        population = nextPop.clone();
+
+        numIters++;
+        acumTimeTaken += (elapsedTimerIteration.elapsedMillis());
+        avgTimeTaken = acumTimeTaken / numIters;
     }
 
+    /**
+     * Evaluates an individual by rolling the current state with the actions in the individual
+     * and returning the value of the resulting state; random action chosen for the opponent
+     * @param individual - individual to be valued
+     * @param heuristic - heuristic to be used for state evaluation
+     * @param state - current state, root of rollouts
+     * @return - value of last state reached
+     */
+    private double evaluate(Individual individual, StateHeuristic heuristic, StateObservation state) {
 
-    private double simulate(StateObservation stateObs, StateHeuristic heuristic, int[] policy) throws TimeoutException {
+        ElapsedCpuTimer elapsedTimerIterationEval = new ElapsedCpuTimer();
 
+        StateObservation st = state.copy();
+        int i;
+        double acum = 0, avg;
+        for (i = 0; i < SIMULATION_DEPTH; i++) {
+            if (! st.isGameOver()) {
+                ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
+                st.advance(action_mapping.get(individual.actions[i]));
 
-        //System.out.println("depth" + depth);
-        long remaining = timer.remainingTimeMillis();
-        if (remaining < BREAK_MS) {
-            //System.out.println(remaining);
-            throw new TimeoutException("Timeout");
-        }
-
-
-        int depth = 0;
-        stateObs = stateObs.copy();
-        for (; depth < policy.length; depth++) {
-            Types.ACTIONS action = action_mapping.get(policy[depth]);
-
-            stateObs.advance(action);
-
-            if (stateObs.isGameOver()) {
+                acum += elapsedTimerIteration.elapsedMillis();
+                avg = acum / (i+1);
+                remaining = timer.remainingTimeMillis();
+                if (remaining < 2*avg || remaining < BREAK_MS) break;
+            } else {
                 break;
             }
         }
 
-        numSimulations++;
-        double score = Math.pow(GAMMA, depth) * heuristic.evaluateState(stateObs);
-        return score;
+        individual.value = heuristic.evaluateState(st);
 
+        numEvals++;
+        acumTimeTakenEval += (elapsedTimerIterationEval.elapsedMillis());
+        avgTimeTakenEval = acumTimeTakenEval / numEvals;
+        remaining = timer.remainingTimeMillis();
 
+        return individual.value;
     }
 
-    private Types.ACTIONS microbial(StateObservation stateObs, int maxdepth, StateHeuristic heuristic, int iterations) {
+    /**
+     * @return - the individual resulting from crossover applied to the specified population
+     */
+    private Individual crossover() {
+        Individual newind = null;
+        if (NUM_INDIVIDUALS > 1) {
+            newind = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
+            Individual[] tournament = new Individual[TOURNAMENT_SIZE];
+            ArrayList<Individual> list = new ArrayList<>(Arrays.asList(population));
 
-        double[] maxScores = new double[stateObs.getAvailableActions().size()];
+            //Select a number of random distinct individuals for tournament and sort them based on value
+            for (int i = 0; i < TOURNAMENT_SIZE; i++) {
+                int index = randomGenerator.nextInt(list.size());
+                tournament[i] = list.get(index);
+                list.remove(index);
+            }
+            Arrays.sort(tournament);
 
-        for (int i = 0; i < maxScores.length; i++) {
-            maxScores[i] = Double.NEGATIVE_INFINITY;
-        }
-
-
-        outerloop:
-        for (int i = 0; i < iterations; i++) {
-            for (Types.ACTIONS action : stateObs.getAvailableActions()) {
-
-
-                StateObservation stCopy = stateObs.copy();
-                stCopy.advance(action);
-
-                double score = 0;
-                try {
-                    score = microbial_tournament(genome[r_action_mapping.get(action)], stCopy, heuristic) + randomGenerator.nextDouble()*0.00001;
-                } catch (TimeoutException e) {
-                    break outerloop;
-                }
-
-                try {
-                    int int_act = this.r_action_mapping.get(action);
-
-                    if (score > maxScores[int_act]) {
-                        maxScores[int_act] = score;
-                    }
-                }catch (Exception e){}
-
+            //get best individuals in tournament as parents
+            if (TOURNAMENT_SIZE >= 2) {
+                newind.crossover(tournament[0], tournament[1], CROSSOVER_TYPE);
+            } else {
+                System.out.println("WARNING: Number of parents must be LESS than tournament size.");
             }
         }
+        return newind;
+    }
 
-        Types.ACTIONS maxAction = this.action_mapping.get(Utils.argmax(maxScores));
+    /**
+     * Insert a new individual into the population at the specified position by replacing the old one.
+     * @param newind - individual to be inserted into population
+     * @param pop - population
+     * @param idx - position where individual should be inserted
+     * @param stateObs - current game state
+     */
+    private void add_individual(Individual newind, Individual[] pop, int idx, StateObservation stateObs) {
+        evaluate(newind, heuristic, stateObs);
+        pop[idx] = newind.copy();
+    }
 
+    /**
+     * Initialize population
+     * @param stateObs - current game state
+     */
+    private void init_pop(StateObservation stateObs) {
 
-        return maxAction;
+        double remaining = timer.remainingTimeMillis();
+
+        N_ACTIONS = stateObs.getAvailableActions().size() + 1;
+        action_mapping = new HashMap<>();
+        int k = 0;
+        for (Types.ACTIONS action : stateObs.getAvailableActions()) {
+            action_mapping.put(k, action);
+            k++;
+        }
+        action_mapping.put(k, Types.ACTIONS.ACTION_NIL);
+
+        population = new Individual[POPULATION_SIZE];
+        nextPop = new Individual[POPULATION_SIZE];
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            if (i == 0 || remaining > avgTimeTakenEval && remaining > BREAK_MS) {
+                population[i] = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
+                evaluate(population[i], heuristic, stateObs);
+                remaining = timer.remainingTimeMillis();
+                NUM_INDIVIDUALS = i+1;
+            } else {break;}
+        }
+
+        if (NUM_INDIVIDUALS > 1)
+            Arrays.sort(population, (o1, o2) -> {
+                if (o1 == null && o2 == null) {
+                    return 0;
+                }
+                if (o1 == null) {
+                    return 1;
+                }
+                if (o2 == null) {
+                    return -1;
+                }
+                return o1.compareTo(o2);
+            });
+        for (int i = 0; i < NUM_INDIVIDUALS; i++) {
+            if (population[i] != null)
+                nextPop[i] = population[i].copy();
+        }
 
     }
 
     /**
-     * Picks an action. This function is called every game step to request an
-     * action from the player.
-     *
-     * @param stateObs     Observation of the current state.
-     * @param elapsedTimer Timer when the action returned is due.
-     * @return An action for the current state
+     * @param pop - last population obtained after evolution
+     * @return - first action of best individual in the population (found at index 0)
      */
-    public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-
-        this.timer = elapsedTimer;
-        numSimulations = 0;
-
-        Types.ACTIONS lastGoodAction = microbial(stateObs, SIMULATION_DEPTH, new WinScoreHeuristic(stateObs), 100);
-
-        return lastGoodAction;
+    private Types.ACTIONS get_best_action(Individual[] pop) {
+        int bestAction = pop[0].actions[0];
+        return action_mapping.get(bestAction);
     }
 
-
-    @Override
-    public void draw(Graphics2D g)
-    {
-        //g.drawString("Num Simulations: " + numSimulations, 10, 20);
-    }
 }
-

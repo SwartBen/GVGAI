@@ -19,7 +19,7 @@ public class Test {
         boolean visuals = false;
         int seed = new Random().nextInt();
         
-        int gameIdx = 0;
+        int gameIdx = 11;
         String gameName = games[gameIdx][1];
         String game = games[gameIdx][0];
 
