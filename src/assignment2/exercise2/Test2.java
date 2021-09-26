@@ -32,6 +32,7 @@ public class Test2 {
 
         int score = 0;
 
+        //Loop over game and calculate score
         for (int i = 0; i <= 4; i++) {
             System.out.println("GENERATION: ");
             System.out.println(i);
@@ -40,6 +41,7 @@ public class Test2 {
             score += ArcadeMachine.runOneGame(game, level, visuals, severalsteplookahead, recordActionsFile, seed, 0)[1];
         }
 
+        //Output score
         System.out.println(score);
     }
 }

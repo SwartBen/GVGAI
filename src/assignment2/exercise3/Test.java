@@ -16,13 +16,13 @@ public class Test {
 
     public static void mutate(Random randomNumGen, double step_size) {
         //Mutate each parameter
-        Test.temp_individual[0] = Test.temp_individual[0]           + increment(randomNumGen, step_size); //gamma
-        Test.temp_individual[1] = Math.ceil(Test.temp_individual[1] + increment(randomNumGen, step_size)); //sim depth
-        Test.temp_individual[2] = Math.ceil(Test.temp_individual[2] + increment(randomNumGen, step_size)); //pop size 
-        Test.temp_individual[3] = Test.temp_individual[3]           + increment(randomNumGen, step_size); //recprob
+        Test.temp_individual[0] = Test.temp_individual[0]            + increment(randomNumGen, step_size); //gamma
+        Test.temp_individual[1] = Math.round(Test.temp_individual[1] + increment(randomNumGen, step_size)); //sim depth
+        Test.temp_individual[2] = Math.round(Test.temp_individual[2] + increment(randomNumGen, step_size)); //pop size 
+        Test.temp_individual[3] = Test.temp_individual[3]            + increment(randomNumGen, step_size); //recprob
         Test.temp_individual[4] = 1/Test.temp_individual[1]; //mut
 
-        //The probabilites sometiems went above 1 so reset when that happens
+        //The probabilites somtimes go above 1 so reset when that happens
         if(Test.temp_individual[0] > 1) Test.temp_individual[0] -= 1;
         if(Test.temp_individual[3] > 1) Test.temp_individual[3] -= 1;
         if(Test.temp_individual[4] > 1) Test.temp_individual[4] -= 1;
@@ -30,9 +30,9 @@ public class Test {
 
     public static double increment(Random randomNumGen, double step_size) {
         //Mean: 0; STD: step_size
-        return Math.abs(step_size*randomNumGen.nextGaussian());
+        return Math.abs(0 + step_size*randomNumGen.nextGaussian());
     }
-
+    
     public static void main(String[] args) {
 
         System.out.println("START GENETIC ALGORITHM OPTIMISED");
@@ -71,7 +71,7 @@ public class Test {
         while (gen_count < 10) {
             
             System.out.println("GENERATION: ");
-            System.out.println(gen_count);
+            System.out.print(gen_count);
             
             //Mutate the individual
             mutate(randomNumGen, step_size);

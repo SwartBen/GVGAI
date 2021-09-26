@@ -81,6 +81,7 @@ public class Agent extends AbstractPlayer {
 
             }
 
+            //if not enough time left break loop
             if(elapsedTimer.remainingTimeMillis() < 5) {
                 break;
             }
@@ -90,7 +91,6 @@ public class Agent extends AbstractPlayer {
         int bestIndex = 0;
 
         for (int i = 1; i < scores.size(); i++) {
-        //  System.out.println(scores.get(i));
             if (scores.get(i) > best) {
                 best = scores.get(i);
                 bestIndex = i;

@@ -52,6 +52,7 @@ public class Test2 {
             System.out.print("Average Score: ");
             System.out.println(mean);
             
+            //Calculate standard deviation
             double std = 0;
             for (int j = 0; j < scores.length; j++) {
                 std += Math.pow(scores[j] - mean, 2);

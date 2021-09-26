@@ -74,6 +74,7 @@ public class Agent extends AbstractPlayer {
         remaining = timer.remainingTimeMillis();
         int generation = 0;
         boolean break_generation = false;
+        
         while (remaining > avgTimeTaken && remaining > BREAK_MS && !break_generation) {
 
             newPop = new ArrayList<Individual>();
@@ -95,10 +96,14 @@ public class Agent extends AbstractPlayer {
                 //Individual child = uniform_crossover(parent1, parent2);
 
                 //Crossover - one_point_crossover
-                Individual child = one_point_crossover(parent1, parent2, stateObs);
+                //Individual child = one_point_crossover(parent1, parent2, stateObs);
+                
+                //Crossover - two_point_crossover
+                Individual child =  two_point_crossover(parent1, parent2, stateObs);
                 
                 //Mutation - swap
                 //child = swap_mutate(child);
+                
                 //Mutation - random
                 child = random_mutate(child);
 
@@ -143,6 +148,7 @@ public class Agent extends AbstractPlayer {
         return action_mapping.get(bestAction); 
     }
 
+    //Creates a population of individuals with random actions
     private ArrayList<Individual> intialise_population() {
 
         population = new ArrayList<Individual>();
@@ -186,6 +192,7 @@ public class Agent extends AbstractPlayer {
         return individual.value;
     }
 
+    //Crossover method. Loops over action array of mum and dad with an equal change to take action from either parent.
     private Individual uniform_crossover(Individual mum, Individual dad) {
         Individual child = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
 
@@ -199,6 +206,7 @@ public class Agent extends AbstractPlayer {
         return child;
     }
 
+    //Crossover method. Splits parent action arrays. Child is comprised of part of the mum, and part of the dad.
     private Individual one_point_crossover(Individual mum, Individual dad, StateObservation state) {
         Individual child1 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
         Individual child2 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
@@ -214,19 +222,76 @@ public class Agent extends AbstractPlayer {
                 child2.actions[i] = mum.actions[i];
         }
 
+        //Returns best child
         if (evaluate(child1, heuristic, state) > evaluate(child2, heuristic, state))
             return child1;
         else 
             return child2;
     }
 
+    //Crossover method. Selects two points to split the mum and dad array.
+    //Creates child based on the split points.
+    private Individual two_point_crossover(Individual mum, Individual dad, StateObservation state) {
+        
+        Individual child1 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
+        Individual child2 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
+
+        //Pick two random index's
+        int smallIndex = randomGenerator.nextInt(mum.actions.length - 3) + 1;
+        int bigIndex = randomGenerator.nextInt(mum.actions.length - 3) + 1;
+        int temp;
+
+
+        //If same index chosen, pick again
+        while(smallIndex == bigIndex)
+            bigIndex = randomGenerator.nextInt(mum.actions.length - 3) + 1;
+        
+        //ensure small index is smaller than big index
+        if(smallIndex > bigIndex) {
+            temp = smallIndex;
+            smallIndex = bigIndex;
+            bigIndex = temp;
+        }
+
+        // System.out.println("-------------");
+        // System.out.println(bigIndex);
+        // System.out.println(smallIndex);
+        // System.out.println("-------------");
+
+        //Create child action arrays
+        int count = 0;
+        for (int i = count; i < smallIndex; i++) {
+            child1.actions[i] = mum.actions[i];
+            child2.actions[i] = dad.actions[i];
+            count++;
+        }
+        for (int i = count; i < bigIndex; i++) {
+            child1.actions[i] = dad.actions[i];
+            child2.actions[i] = mum.actions[i];
+            count++;
+        }
+        for (int i = count; i < mum.actions.length; i++) {
+            child1.actions[i] = mum.actions[i];
+            child2.actions[i] = dad.actions[i];
+            count++;
+        }
+
+        //Returns best child
+        if (evaluate(child1, heuristic, state) > evaluate(child2, heuristic, state))
+            return child1;
+        else 
+            return child2;
+    }
+
+    //Parent selection method => Tournament select
+    //Selects 3 random individuals from population. Best individual returned for breeding.
     private Individual tournament_select(ArrayList<Individual> population, ArrayList<Double> pop_fitness) {
 
         ArrayList<Individual> tournament = new ArrayList<>();
         ArrayList<Double> tournament_fitness = new ArrayList<>();
 
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             int index = randomGenerator.nextInt(population.size());
             tournament.add(population.get(index));
             tournament_fitness.add(pop_fitness.get(index));
@@ -237,6 +302,7 @@ public class Agent extends AbstractPlayer {
         return tournament.get(bestIndex);
     }
 
+    //Mutation method. Swaps to random actions in the individuals action array.
     private Individual swap_mutate(Individual individual) {
        
         int index1 = randomGenerator.nextInt(individual.actions.length);
@@ -251,9 +317,13 @@ public class Agent extends AbstractPlayer {
         
     return individual;
     }
+    
+    //Mutation method. Randomly mutates actions in the individuals action array.
     private Individual random_mutate(Individual individual) {
        
+        //Loop over action array
         for (int i = 0; i < individual.actions.length; i++) {
+            //Mutate
             if (randomGenerator.nextDouble() < 0.5) {
                 int newActionIndex = randomGenerator.nextInt(individual.nLegalActions);
                 individual.actions[i] = individual.actions[newActionIndex];
@@ -263,7 +333,7 @@ public class Agent extends AbstractPlayer {
     return individual;
     }
 
-
+    //Returns index of best fitness in population
     private int getMaxIndex(ArrayList<Double> fitness) {
 
         double max = fitness.get(0);

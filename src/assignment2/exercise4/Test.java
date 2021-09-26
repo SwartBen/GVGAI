@@ -12,7 +12,7 @@ public class Test {
         String ownController = "assignment2.exercise4.Agent";
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
-        boolean visuals = false;
+        boolean visuals = true;
         int seed = new Random().nextInt();
 
 
@@ -36,12 +36,12 @@ public class Test {
             String game = games[gameIdx[gameid]][0];
             
             //For each level
-            for (int lvl = 0; lvl <= 4; lvl ++) {
+            for (int levelNum = 0; levelNum <= 4; levelNum ++) {
 
                 System.out.print("LEVEL: ");
-                System.out.println(lvl);
+                System.out.println(levelNum);
 
-                String level = game.replace(gameName, gameName + "_lvl" + lvl);
+                String level = game.replace(gameName, gameName + "_lvl" + levelNum);
                 double[] scores = new double[5];
 
                 //Run each level 5 times
@@ -58,6 +58,7 @@ public class Test {
                 System.out.print("Average Score: ");
                 System.out.println(mean);
                 
+                //Calculate Standard Deviation
                 double std = 0;
                 for (int j = 0; j < scores.length; j++) {
                     std += Math.pow(scores[j] - mean, 2);

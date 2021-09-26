@@ -8,19 +8,21 @@ public class Individual implements Comparable {
     public double value;
     private Random gen;
 
+    //Initialise individual
     Individual(int L, int nLegalActions, Random gen) {
         actions = new int[L];
         for (int i = 0; i < L; i++) {
             actions[i] = gen.nextInt(nLegalActions);
         }
         this.nLegalActions = nLegalActions;
-        this.gen = gen;
-    }
+    }   
 
+    //Set individuals actions
     public void setActions (int[] a) {
         System.arraycopy(a, 0, actions, 0, a.length);
     }
 
+    //Compares two individuals value.
     @Override
     public int compareTo(Object o) {
         Individual a = this;
@@ -28,28 +30,7 @@ public class Individual implements Comparable {
         return Double.compare(b.value, a.value);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Individual)) return false;
-
-        Individual a = this;
-        Individual b = (Individual)o;
-
-        for (int i = 0; i < actions.length; i++) {
-            if (a.actions[i] != b.actions[i]) return false;
-        }
-
-        return true;
-    }
-
-    public Individual copy () {
-        Individual a = new Individual(this.actions.length, this.nLegalActions, this.gen);
-        a.value = this.value;
-        a.setActions(this.actions);
-
-        return a;
-    }
-
+    //Show individual as a string => for debugging
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("" + value + ": ");

@@ -65,14 +65,17 @@ public class Test {
 		System.out.print("Mean: ");
 		System.out.println(mean);
 
+		//Print and calculate standard deviation
 		double mae = 0;
 		for(int i = 0; i < 5; i++) {
 			mae = mae + Math.pow(allScores[i] - mean, 2);
 		}
+
 		double stddev = Math.sqrt(mae/1);
 		System.out.print("Stddev: ");
 		System.out.println(stddev);
 
+		//Print Scores
 		for(int i = 0; i < 5; i++) {
 			System.out.print("Scores: ");
 			System.out.print(allScores[i]);
