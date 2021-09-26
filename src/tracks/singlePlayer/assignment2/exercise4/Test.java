@@ -7,18 +7,14 @@ import tracks.ArcadeMachine;
 public class Test {
 
     public static void main(String[] args) {
-        
-        System.out.println("OWN CONTROLLER");
-            
+                    
         //Testing setup
-        String ownController = "tracks.singlePlayer.assignment2.ownController.Agent";
+        String ownController = "tracks.singlePlayer.assignment2.exercise4.Agent";
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
-        boolean visuals = true;
+        boolean visuals = false;
         int seed = new Random().nextInt();
-        int gameIdx = 0;
-        String gameName = games[gameIdx][1];
-        String game = games[gameIdx][0];
+
 
         String recordActionsFile = null; // "actions_" + games[gameIdx] + "_lvl"
                         // + levelIdx + "_" + seed + ".txt";
@@ -26,16 +22,50 @@ public class Test {
                         // executed. null if not to save.
 
         /*----------------- TEST OWN CONTROLLER ----------------------------*/
-        String levelNum = game.replace(gameName, gameName + "_lvl" + 1);
+        //String levelNum = game.replace(gameName, gameName + "_lvl" + 0);
         int score = 0;
-        for (int i = 0; i <= 4; i++) {
-            System.out.println("LEVEL: ");
-            System.out.println(i);
+        
+        int[] gameIdx = {0, 11, 13, 18};
 
-            String level = game.replace(gameName, gameName + "_lvl" + i);
-            score += ArcadeMachine.runOneGame(game, levelNum, visuals, ownController, recordActionsFile, seed, 0)[1];
+        //For each game
+        for (int gameid = 0; gameid < 4; gameid++) {
+            
+            System.out.print("-----------GAME-------------- => ");
+            System.out.println(gameid);
+
+            String gameName = games[gameIdx[gameid]][1];
+            String game = games[gameIdx[gameid]][0];
+            
+            //For each level
+            for (int lvl = 0; lvl <= 4; lvl ++) {
+
+                System.out.print("LEVEL: ");
+                System.out.println(lvl);
+
+                String level = game.replace(gameName, gameName + "_lvl" + lvl);
+                double[] scores = new double[5];
+
+                //Run each level 5 times
+                for (int i = 0; i <= 4; i++) {
+                    scores[i] = ArcadeMachine.runOneGame(game, level, visuals, ownController, recordActionsFile, seed, 0)[1];
+                }
+
+                //Calculate average
+                double total_score = 0;
+                for (int j = 0; j < scores.length; j++) {
+                    total_score += scores[j];
+                }
+                double mean = total_score / 5;
+                System.out.print("Average Score: ");
+                System.out.println(mean);
+                
+                double std = 0;
+                for (int j = 0; j < scores.length; j++) {
+                    std += Math.pow(scores[j] - mean, 2);
+                } 
+                System.out.print("STD: ");
+                System.out.println(Math.sqrt(std/scores.length));
+            }
         }
-
-        System.out.println(score);
     }
 }

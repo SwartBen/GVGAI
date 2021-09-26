@@ -13,8 +13,8 @@ import java.util.*;
 public class Agent extends AbstractPlayer {
 
     // Parameters
-    private int POPULATION_SIZE = 20;
-    private int SIMULATION_DEPTH = 7;
+    private int POPULATION_SIZE = 10;
+    private int SIMULATION_DEPTH = 10;
     private StateHeuristic heuristic;
 
     // Constants
@@ -96,8 +96,11 @@ public class Agent extends AbstractPlayer {
 
                 //Crossover - one_point_crossover
                 Individual child = one_point_crossover(parent1, parent2, stateObs);
-                //Mutation
-                child = swap_mutate(child);
+                
+                //Mutation - swap
+                //child = swap_mutate(child);
+                //Mutation - random
+                child = random_mutate(child);
 
                 newPop.add(child);
                 evaluate(child, heuristic, stateObs);
@@ -236,9 +239,8 @@ public class Agent extends AbstractPlayer {
 
     private Individual swap_mutate(Individual individual) {
        
-        int index1 = randomGenerator.nextInt(individual.nLegalActions);
-        int index2 = randomGenerator.nextInt(individual.nLegalActions);
-
+        int index1 = randomGenerator.nextInt(individual.actions.length);
+        int index2 = randomGenerator.nextInt(individual.actions.length);
 
         while (index1 == index2) 
             index2 = randomGenerator.nextInt(individual.actions.length);
@@ -247,9 +249,20 @@ public class Agent extends AbstractPlayer {
         individual.actions[index1] = individual.actions[index2];
         individual.actions[index2] = individual.actions[temp];
         
-
     return individual;
     }
+    private Individual random_mutate(Individual individual) {
+       
+        for (int i = 0; i < individual.actions.length; i++) {
+            if (randomGenerator.nextDouble() < 0.5) {
+                int newActionIndex = randomGenerator.nextInt(individual.nLegalActions);
+                individual.actions[i] = individual.actions[newActionIndex];
+            }
+        }
+        
+    return individual;
+    }
+
 
     private int getMaxIndex(ArrayList<Double> fitness) {
 
