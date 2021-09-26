@@ -32,7 +32,7 @@ public class Test {
         //Mean: 0; STD: step_size
         return Math.abs(0 + step_size*randomNumGen.nextGaussian());
     }
-    
+
     public static void main(String[] args) {
 
         System.out.println("START GENETIC ALGORITHM OPTIMISED");
@@ -42,7 +42,7 @@ public class Test {
         String geneticOptimised = "assignment2.exercise3.Agent";
 		String spGamesCollection =  "examples/all_games_sp.csv";
 		String[][] games = Utils.readGames(spGamesCollection);
-		boolean visuals = false;
+		boolean visuals = true;
 		int seed = new Random().nextInt();
         int gameIdx = 0;
         String gameName = games[gameIdx][1];

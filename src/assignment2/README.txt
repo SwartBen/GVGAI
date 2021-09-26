@@ -25,3 +25,9 @@ assignment2
 
 # RUN CODE INSTRUCTIONS
 
+Run on Visual Studio Code
+1. Install the coding pack for Java https://code.visualstudio.com/docs/languages/java
+2. Install the extension Pack for Java (Important steps 4 - 5 rely on this) https://code.visualstudio.com/docs/languages/java
+3. Go to the 'Test.java' file you wish to run.
+4. In the top right corner there is a right arrow. Next to that there is a down facing arrow.
+5. Click on the down facing arrow, and then click on the 'Run Java' option. 
