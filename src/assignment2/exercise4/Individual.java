@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.exercise4;
+package assignment2.exercise4;
 import java.util.Random;
 
 public class Individual implements Comparable {

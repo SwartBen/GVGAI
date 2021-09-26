@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.exercise3;
+package assignment2.exercise3;
 
 import java.util.Random;
 
@@ -15,7 +15,7 @@ public class Test2 {
 
         /*----------------- TESTING VARIABLES SETUP ----------------------------*/
 
-        String geneticOptimised = "tracks.singlePlayer.assignment2.geneticAdvanced.Agent";
+        String geneticOptimised = "assignment2.exercise3.Agent";
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
         boolean visuals = false;

@@ -60,10 +60,5 @@ public class Agent extends AbstractPlayer {
 
         //System.out.println("======== "  + maxQ + " " + bestAction + "============");
         return bestAction;
-
-
-
     }
-
-
 }

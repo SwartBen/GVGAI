@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.exercise4;
+package assignment2.exercise4;
 import java.util.Random;
 
 import tools.Utils;
@@ -9,7 +9,7 @@ public class Test {
     public static void main(String[] args) {
                     
         //Testing setup
-        String ownController = "tracks.singlePlayer.assignment2.exercise4.Agent";
+        String ownController = "assignment2.exercise4.Agent";
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
         boolean visuals = false;
@@ -23,12 +23,11 @@ public class Test {
 
         /*----------------- TEST OWN CONTROLLER ----------------------------*/
         //String levelNum = game.replace(gameName, gameName + "_lvl" + 0);
-        int score = 0;
         
         int[] gameIdx = {0, 11, 13, 18};
 
         //For each game
-        for (int gameid = 0; gameid < 4; gameid++) {
+        for (int gameid = 0; gameid <= 3; gameid++) {
             
             System.out.print("-----------GAME-------------- => ");
             System.out.println(gameid);

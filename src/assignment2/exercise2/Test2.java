@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.exercise2;
+package assignment2.exercise2;
 
 import java.util.Random;
 
@@ -7,13 +7,13 @@ import tools.Utils;
 import tracks.ArcadeMachine;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Test {
+public class Test2 {
     public static void main(String[] args) {
         
         System.out.println("MULTI STEP LOOKAHEAD CONTROLLER");
             
         //Testing setup
-        String  severalsteplookahead = "tracks.singlePlayer.assignment2.sampleseveralsteplookahead.Agent";
+        String  severalsteplookahead = "assignment2.exercise2.Agent";
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
         boolean visuals = true;
@@ -28,9 +28,10 @@ public class Test {
                         // where to record the actions
                         // executed. null if not to save.
 
-        /*----------------- TEST OWN CONTROLLER ----------------------------*/
+        /*----------------- TEST MULTI STEP LOOK AHEAD CONTROLLER ----------------------------*/
 
         int score = 0;
+
         for (int i = 0; i <= 4; i++) {
             System.out.println("GENERATION: ");
             System.out.println(i);

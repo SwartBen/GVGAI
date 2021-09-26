@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.exercise4;
+package assignment2.exercise4;
 
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
@@ -45,7 +45,7 @@ public class Agent extends AbstractPlayer {
         this.timer = elapsedTimer;
 
         //Initialise actions
-        N_ACTIONS = stateObs.getAvailableActions().size() + 1;
+        N_ACTIONS = stateObs.getAvailableActions().size();
         action_mapping = new HashMap<>();
         int k = 0;
         for (Types.ACTIONS action : stateObs.getAvailableActions()) {
@@ -226,7 +226,7 @@ public class Agent extends AbstractPlayer {
         ArrayList<Double> tournament_fitness = new ArrayList<>();
 
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
             int index = randomGenerator.nextInt(population.size());
             tournament.add(population.get(index));
             tournament_fitness.add(pop_fitness.get(index));
