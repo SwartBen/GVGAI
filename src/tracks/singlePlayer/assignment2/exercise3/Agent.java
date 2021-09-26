@@ -57,12 +57,11 @@ public class Agent extends AbstractPlayer {
         RECPROB = Test.temp_individual[3];
         MUT = Test.temp_individual[4];
         
-        System.out.println(GAMMA);
-        System.out.println(SIMULATION_DEPTH);
-        System.out.println(POPULATION_SIZE);
-        System.out.println(RECPROB);
-        System.out.println(MUT);
-
+        // System.out.println(GAMMA);
+        // System.out.println(SIMULATION_DEPTH);
+        // System.out.println(POPULATION_SIZE);
+        // System.out.println(RECPROB);
+        // System.out.println(MUT);
 
         randomGenerator = new Random();
 
