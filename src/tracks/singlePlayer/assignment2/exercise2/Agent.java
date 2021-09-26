@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.sampleseveralsteplookahead;
+package tracks.singlePlayer.assignment2.exercise2;
 
 
 import tracks.singlePlayer.tools.Heuristics.SimpleStateHeuristic;
@@ -38,6 +38,7 @@ public class Agent extends AbstractPlayer {
 
         Types.ACTIONS bestAction = null;
         double maxQ = Double.NEGATIVE_INFINITY;
+        
         for (Types.ACTIONS action : stateObs.getAvailableActions()) {
 
             //copies the states observation
@@ -49,6 +50,7 @@ public class Agent extends AbstractPlayer {
             //Evaluate next actions of previous action
             double nextMaxQ = Double.NEGATIVE_INFINITY;
             SimpleStateHeuristic heuristic =  new SimpleStateHeuristic(stCopy);
+            
             /*--------------------- Start of Second Step -----------------*/
             for (Types.ACTIONS nextAction : stCopy.getAvailableActions()) {
 

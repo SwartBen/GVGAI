@@ -1,4 +1,4 @@
-package tracks.singlePlayer.assignment2.geneticAdvanced;
+package tracks.singlePlayer.assignment2.exercise3;
 import java.util.Random;
 
 import core.logging.Logger;
@@ -18,25 +18,18 @@ public class Test {
 
         System.out.println("START GENETIC ALGORITHM OPTIMISED");
 		
-        //Testing setup
-		String geneticOptimised = "tracks.singlePlayer.assignment2.geneticAdvanced.Agent";
+        /*----------------- TESTING VARIABLES SETUP ----------------------------*/
+
+        String geneticOptimised = "tracks.singlePlayer.assignment2.geneticAdvanced.Agent";
 		String spGamesCollection =  "examples/all_games_sp.csv";
 		String[][] games = Utils.readGames(spGamesCollection);
 		boolean visuals = false;
 		int seed = new Random().nextInt();
-		
         int gameIdx = 0;
         String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
-
         Random randomNumGen = new Random();
-
-        String recordActionsFile = null; // "actions_" + games[gameIdx] + "_lvl"
-						// + levelIdx + "_" + seed + ".txt";
-						// where to record the actions
-						// executed. null if not to save.
-
-        
+        String recordActionsFile = null;
         
         /*----------------- THE EVO ALGORITHM ----------------------------*/
         
@@ -49,15 +42,15 @@ public class Test {
         double variation = 1;
         double c = 0.8;
 
-        //POPULATUION INITALISATION
+        //POPULATUION INITALISATION => Game plays levels 0-4 of specified game
         for (int i = 0; i <= 4; i++) {
             String level = game.replace(gameName, gameName + "_lvl" + i);
             best_score += ArcadeMachine.runOneGame(game, level, visuals, geneticOptimised, recordActionsFile, seed, 0)[1];
         }
         
         //RUN ALGORITHM
-        int gen_count = 1;
-        while (gen_count < 11) {
+        int gen_count = 0;
+        while (gen_count < 10) {
             
             System.out.println("GENERATION: ");
             System.out.println(gen_count);
@@ -77,26 +70,29 @@ public class Test {
 
             //Evaluate score of new individual compared to the best found
             if (best_score < temp_score) {
+                successful_mutations++;
                 best_score = temp_score;
                 best_individual = temp_individual;
-                successful_mutations++;
             }
-
-            //Co-Evolve mutation step size
-            if(successful_mutations/mutations_count > 1/5 )
-                variation /= c;
-            else if(successful_mutations/mutations_count < 1/5 )
-                variation *= c;
-
-            //Reset mutation step rule every 5 mutations
+            
+            //Reset mutation step size rule every 5 mutations??
             if(gen_count % 5 == 0) {
                 successful_mutations = 1;
                 mutations_count = 1;
             }
+            
+            //Co-Evolve mutation step size
+            if(successful_mutations / mutations_count > 1/5 )
+                variation /= c;
+            else if(successful_mutations / mutations_count < 1/5 )
+                variation *= c;
 
             temp_score = 0;
             gen_count++;
         }
+
+        /*----------------- RESULTS OUTPUT ----------------------------*/
+
         System.out.println("OPTIMISED PARAMETERS");
 
         System.out.print("GAMMA: ");
@@ -109,38 +105,6 @@ public class Test {
         System.out.println(best_individual[3]);
         System.out.print("MUT: ");
         System.out.println(best_individual[4]);
-
-		// 3. This replays a game from an action file previously recorded
-	//	 String readActionsFile = recordActionsFile;
-	//	 ArcadeMachine.replayGame(game, level1, visuals, readActionsFile);
-
-		// 4. This plays a single game, in N levels, M times :
-		// String level2 = new String(game).replace(gameName, gameName + "_lvl" + 1);
-		// int M = 10;
-		// for(int i=0; i<games.length; i++){
-		// 	game = games[i][0];
-		// 	gameName = games[i][1];
-		// 	level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
-		// 	ArcadeMachine.runGames(game, new String[]{level1}, M, sampleMCTSController, null);
-		// }
-
-		//5. This plays N games, in the first L levels, M times each. Actions to file optional (set saveActions to true).
-		// int N = games.length, L = 5, M = 5;
-		// boolean saveActions = false;
-		// String[] levels = new String[L];
-		// String[] actionFiles = new String[L*M];
-		// for(int i = 0; i < N; ++i)
-		// {
-		// 	int actionIdx = 0;
-		// 	game = games[i][0];
-		// 	gameName = games[i][1];
-		// 	for(int j = 0; j < L; ++j){
-		// 		levels[j] = game.replace(gameName, gameName + "_lvl" + j);
-		// 		if(saveActions) for(int k = 0; k < M; ++k)
-		// 		actionFiles[actionIdx++] = "actions_game_" + i + "_level_" + j + "_" + k + ".txt";
-		// 	}
-		 //	ArcadeMachine.runGames(game, levels, M, sampleRHEAController, saveActions? actionFiles:null);
-		// }
 
     return;
     }

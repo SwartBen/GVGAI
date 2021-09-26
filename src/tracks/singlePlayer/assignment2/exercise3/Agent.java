@@ -1,11 +1,11 @@
-package tracks.singlePlayer.assignment2.geneticAdvanced;
+package tracks.singlePlayer.assignment2.exercise3;
 
 import java.awt.Graphics2D;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-import tracks.singlePlayer.assignment2.geneticAdvanced.Test;
+import tracks.singlePlayer.assignment2.exercise3.Test;
 import tracks.singlePlayer.tools.Heuristics.StateHeuristic;
 import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 import core.game.StateObservation;

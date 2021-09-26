@@ -23,12 +23,12 @@ import tools.Utils;
  */
 public class Agent extends AbstractPlayer {
 
-    private double GAMMA = 0.548; //TO OPTIMISE 0.9
+    private double GAMMA = 0.9; //TO OPTIMISE 0.9, 0,548
     private long BREAK_MS = 5;
-    private int SIMULATION_DEPTH = 12; //TO OPTIMISE 7
-    private int POPULATION_SIZE = 27; //TO OPTIMISE 5
+    private int SIMULATION_DEPTH = 7; //TO OPTIMISE 7, 12
+    private int POPULATION_SIZE = 5; //TO OPTIMISE 5, 27
 
-    private double RECPROB = 0.263; //TO OPTIMISE 0.1
+    private double RECPROB = 0.1; //TO OPTIMISE 0.1, 0,263
     private double MUT = (1.0 / SIMULATION_DEPTH); //TO OPTIMISE 
     private final int N_ACTIONS;
 
@@ -206,7 +206,7 @@ public class Agent extends AbstractPlayer {
         numSimulations = 0;
 
         Types.ACTIONS lastGoodAction = microbial(stateObs, SIMULATION_DEPTH, new WinScoreHeuristic(stateObs), 100);
-
+        
         return lastGoodAction;
     }
 

@@ -19,7 +19,7 @@ public class Test {
 		String sampleOneStepController = "tracks.singlePlayer.simple.sampleonesteplookahead.Agent";
 		String sampleFlatMCTSController = "tracks.singlePlayer.simple.greedyTreeSearch.Agent";
 		String sampleGAController = "tracks.singlePlayer.deprecated.sampleGA.Agent";
-		String sampleSeveralStepController = "tracks.singlePlayer.assignment2.sampleseveralsteplookahead.Agent";
+		String sampleSeveralStepController = "tracks.singlePlayer.assignment2.exercise2.Agent";
 
 		String sampleMCTSController = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
         String sampleRSController = "tracks.singlePlayer.advanced.sampleRS.Agent";
@@ -36,11 +36,11 @@ public class Test {
 
 		// Game and level to play
 		int gameIdx = 11;
-		int levelIdx = 0; // level names from 0 to 4 (game_lvlN.txt).
+		int levelIdx = 1; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
 
-		String level0 = game.replace(gameName, gameName + "_lvl" + levelIdx);
+		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
 
 		String recordActionsFile = null; // "actions_" + games[gameIdx] + "_lvl"
 						// + levelIdx + "_" + seed + ".txt";
@@ -57,7 +57,7 @@ public class Test {
 		for(int i = 0; i < 5; i++) {
 			System.out.println(i);
 			String level = game.replace(gameName, gameName + "_lvl" + i);
-			runningScore += ArcadeMachine.runOneGame(game, level, visuals, sampleRHEAController, recordActionsFile, seed, 0)[1];
+			runningScore += ArcadeMachine.runOneGame(game, level1, visuals, sampleSeveralStepController, recordActionsFile, seed, 0)[1];
 		}
 		System.out.println("SCORE");
 		System.out.println(runningScore);

@@ -42,6 +42,7 @@ public class Agent extends AbstractPlayer {
         Types.ACTIONS bestAction = null;
         double maxQ = Double.NEGATIVE_INFINITY;
         SimpleStateHeuristic heuristic =  new SimpleStateHeuristic(stateObs);
+        
         for (Types.ACTIONS action : stateObs.getAvailableActions()) {
 
             StateObservation stCopy = stateObs.copy();
@@ -54,7 +55,6 @@ public class Agent extends AbstractPlayer {
                 maxQ = Q;
                 bestAction = action;
             }
-
 
         }
 

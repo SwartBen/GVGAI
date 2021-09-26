@@ -1,7 +1,7 @@
 package tracks.singlePlayer.advanced.sampleRHEA;
 import java.util.Random;
 
-public class Individual implements Comparable{
+public class Individual implements Comparable {
 
     protected int[] actions; // actions in individual. length of individual = actions.length
     private int nLegalActions; // number of legal actions
