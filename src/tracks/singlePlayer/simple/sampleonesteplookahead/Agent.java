@@ -44,7 +44,6 @@ public class Agent extends AbstractPlayer {
         SimpleStateHeuristic heuristic =  new SimpleStateHeuristic(stateObs);
         
         for (Types.ACTIONS action : stateObs.getAvailableActions()) {
-
             StateObservation stCopy = stateObs.copy();
             stCopy.advance(action);
             double Q = heuristic.evaluateState(stCopy);

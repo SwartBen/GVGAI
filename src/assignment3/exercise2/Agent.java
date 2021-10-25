@@ -1,9 +1,10 @@
-package assignment2.exercise4;
+package assignment3.exercise2;
 
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types;
 import tools.ElapsedCpuTimer;
+import tracks.singlePlayer.tools.Heuristics.SimpleStateHeuristic;
 import tracks.singlePlayer.tools.Heuristics.StateHeuristic;
 import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 
@@ -13,25 +14,20 @@ import java.util.*;
 public class Agent extends AbstractPlayer {
 
     // Parameters
-    private int POPULATION_SIZE = 10;
-    private int SIMULATION_DEPTH = 10;
+    private int calltoAdvance;
+    private int POPULATION_SIZE = 20;
+    private int SIMULATION_DEPTH = 40;
     private StateHeuristic heuristic;
 
     // Constants
-    private final long BREAK_MS = 10;
     public static final double epsilon = 1e-6;
 
     // Class vars
-    private ArrayList<Individual> population, newPop;
-    private ArrayList<Double> pop_fitness, new_fitness;
+    private ArrayList<Individual> population, next_population;
+    private ArrayList<Double> population_fitness, next_population_fitness;
     private int N_ACTIONS;
     private HashMap<Integer, Types.ACTIONS> action_mapping;
     private Random randomGenerator;
-
-    // Budgets
-    private ElapsedCpuTimer timer;
-    private double avgTimeTaken = 0;
-    private long remaining;
 
     /**
      * Public constructor with state observation and time due.
@@ -40,13 +36,14 @@ public class Agent extends AbstractPlayer {
      * @param elapsedTimer Timer for the controller creation.
      */
     public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+        calltoAdvance = 0;
         randomGenerator = new Random();
         heuristic = new WinScoreHeuristic(stateObs);
-        this.timer = elapsedTimer;
-
+        
         //Initialise actions
         N_ACTIONS = stateObs.getAvailableActions().size();
         action_mapping = new HashMap<>();
+        
         int k = 0;
         for (Types.ACTIONS action : stateObs.getAvailableActions()) {
             action_mapping.put(k, action);
@@ -57,92 +54,79 @@ public class Agent extends AbstractPlayer {
 
     @Override
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        this.timer = elapsedTimer;
-        avgTimeTaken = 0;
-        remaining = timer.remainingTimeMillis();
-        
-        //Initialise pop
+
+        //Initialise population
         population = intialise_population();
 
         //Calculate fitness of entire population
-        pop_fitness = new ArrayList<Double>();
+        population_fitness = new ArrayList<Double>();
         for (int i = 0; i < population.size(); i++)
-            pop_fitness.add(evaluate(population.get(i), heuristic, stateObs));
-    
-        //Loop over generations until termination conditon is met.
-        remaining = timer.remainingTimeMillis();
-        int generation = 0;
-        boolean break_generation = false;
+            population_fitness.add(evaluate(population.get(i), heuristic, stateObs));
         
-        while (remaining > avgTimeTaken && remaining > BREAK_MS && !break_generation) {
+        Individual current_best = population.get(getMaxIndex(population_fitness));
+        double current_best_score = evaluate(current_best, heuristic, stateObs);
+        //Loop over generations until termination conditon is met.
+        while (calltoAdvance < 5000000) {
 
-            newPop = new ArrayList<Individual>();
+            System.out.println(calltoAdvance);
+            //Intialise next population
+            next_population = new ArrayList<Individual>();
+            next_population_fitness = new ArrayList<Double>();
 
             //Elitism select
-            int elitismIndex = getMaxIndex(pop_fitness);
-            newPop.add(population.get(elitismIndex));
+            int elitismIndex = getMaxIndex(population_fitness);
+            Individual elitesmIndv = population.get(elitismIndex);
+            next_population.add(elitesmIndv);
+            next_population_fitness.add(evaluate(elitesmIndv, heuristic, stateObs));
 
             //Iterate over population
 
             for (int i = 1; i < population.size(); i++) {
                 //Parent Select - Tournament
-                Individual parent1 = tournament_select(population, pop_fitness);
-                Individual parent2 = tournament_select(population, pop_fitness);
+                Individual parent1 = tournament_select(population, population_fitness);
+                Individual parent2 = tournament_select(population, population_fitness);
                 while (parent2 == parent1)
-                    parent2 = tournament_select(population, pop_fitness);
+                    parent2 = tournament_select(population, population_fitness);
 
                 //Crossover - uniform
-                //Individual child = uniform_crossover(parent1, parent2);
+                Individual child = uniform_crossover(parent1, parent2);
 
-                //Crossover - one_point_crossover
-                //Individual child = one_point_crossover(parent1, parent2, stateObs);
-                
-                //Crossover - two_point_crossover
-                Individual child =  two_point_crossover(parent1, parent2, stateObs);
-                
-                //Mutation - swap
-                //child = swap_mutate(child);
-                
                 //Mutation - random
                 child = random_mutate(child);
 
-                newPop.add(child);
-                evaluate(child, heuristic, stateObs);
-
-                remaining = timer.remainingTimeMillis();
-
-                if(remaining < BREAK_MS) {
-                    break_generation = true;
-                    break; 
-                }
+                next_population.add(child);
+                next_population_fitness.add(evaluate(child, heuristic, stateObs));
             }
-
-            population = newPop;
+            int temp_best_index = getMaxIndex(next_population_fitness);
+            Individual temp_best_indv = population.get(temp_best_index);
             
-            //Calculate fitness of entire population
-            new_fitness = new ArrayList<Double>();
-            for (int i = 0; i < population.size(); i++) {
-                new_fitness.add(evaluate(population.get(i), heuristic, stateObs));
-            }
-            pop_fitness = new_fitness;
+            //If best of population is worse set new best
+            if(current_best_score < evaluate(temp_best_indv, heuristic, stateObs)) {
+                current_best = next_population.get(temp_best_index);
+                current_best_score = current_best.value;
+            } 
 
-            generation++;
-            remaining = timer.remainingTimeMillis();
-            avgTimeTaken = timer.elapsedMillis()/generation;
+            //Add one to actions array
+            this.SIMULATION_DEPTH = SIMULATION_DEPTH + 1;
+            for (int i = 0; i < POPULATION_SIZE; i++) {
+                //get individual
+                Individual indv = next_population.get(i);
+
+                indv.addOneAction(indv.actions, N_ACTIONS, randomGenerator);
+                //add a move
+                next_population_fitness.set(i, evaluate(indv, heuristic, stateObs));
+            }
+            
+            
+            //Set next population to current
+            population = next_population;
+            population_fitness = next_population_fitness;
+
+           System.out.println(current_best_score);
         }
 
-        // System.out.println("----------");
-        // System.out.println("----------");
-        // System.out.println("----------");
-        // for (int i = 0; i < pop_fitness.size(); i++)
-        //     System.out.println(pop_fitness.get(i));
-        
-        // System.out.println("----------");
-        // System.out.println(pop_fitness.get(getMaxIndex(pop_fitness)));
-        // System.out.println("----------");
-
         // RETURN ACTION
-        int bestIndex = getMaxIndex(pop_fitness);
+        int bestIndex = getMaxIndex(population_fitness);
         int bestAction = population.get(bestIndex).actions[0]; 
         return action_mapping.get(bestAction); 
     }
@@ -158,8 +142,6 @@ public class Agent extends AbstractPlayer {
         return population;
     }
 
-    
-
     /**
      * Evaluates an individual by rolling the current state with the actions in the individual
      * and returning the value of the resulting state; random action chosen for the opponent
@@ -171,17 +153,11 @@ public class Agent extends AbstractPlayer {
     private double evaluate(Individual individual, StateHeuristic heuristic, StateObservation state) {
 
         StateObservation st = state.copy();
-        double acum = 0, avg;
 
-        for (int i = 0; i < SIMULATION_DEPTH; i++) {
+        for (int i = 0; i < individual.actions.length; i++) {
             if (! st.isGameOver()) {
-                ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
                 st.advance(action_mapping.get(individual.actions[i]));
-
-                acum += elapsedTimerIteration.elapsedMillis();
-                avg = acum / (i+1);
-                remaining = timer.remainingTimeMillis();
-                if (remaining < 2*avg || remaining < BREAK_MS) break;
+                calltoAdvance++;
             } else {
                 break;
             }
@@ -284,16 +260,15 @@ public class Agent extends AbstractPlayer {
 
     //Parent selection method => Tournament select
     //Selects 3 random individuals from population. Best individual returned for breeding.
-    private Individual tournament_select(ArrayList<Individual> population, ArrayList<Double> pop_fitness) {
+    private Individual tournament_select(ArrayList<Individual> population, ArrayList<Double> population_fitness) {
 
         ArrayList<Individual> tournament = new ArrayList<>();
         ArrayList<Double> tournament_fitness = new ArrayList<>();
 
-
         for (int i = 0; i < 3; i++) {
             int index = randomGenerator.nextInt(population.size());
             tournament.add(population.get(index));
-            tournament_fitness.add(pop_fitness.get(index));
+            tournament_fitness.add(population_fitness.get(index));
         }
 
         int bestIndex = getMaxIndex(tournament_fitness);

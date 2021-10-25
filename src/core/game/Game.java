@@ -864,6 +864,11 @@ public abstract class Game {
 	 *            sampleRandom seed for the whole game.
 	 * @return the score of the game played.
 	 */
+
+	public void runGame2(Player[] players, int randomSeed) {
+		prepareGame(players, randomSeed, -1);
+	}
+
 	public double[] runGame(Player[] players, int randomSeed) {
 		// Prepare some structures and references for this game.
 		prepareGame(players, randomSeed, -1);
