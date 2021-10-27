@@ -14,7 +14,7 @@ import java.util.*;
 public class SingleObjective {
 
     // Parameters
-    private int calltoAdvance;
+    public int calltoAdvance = 0;
     private int POPULATION_SIZE = 20;
     private int SIMULATION_DEPTH = 40;
     private StateHeuristic heuristic;
@@ -36,7 +36,6 @@ public class SingleObjective {
      * @param elapsedTimer Timer for the controller creation.
      */
     public SingleObjective(StateObservation stateObs) {
-        calltoAdvance = 0;
         randomGenerator = new Random();
         heuristic = new WinScoreHeuristic(stateObs);
         
@@ -52,7 +51,7 @@ public class SingleObjective {
         action_mapping.put(k, Types.ACTIONS.ACTION_NIL);
     }
 
-    public Types.ACTIONS[] act(StateObservation stateObs) {
+    public Individual act(StateObservation stateObs) {
 
         //Initialise population
         population = intialise_population();
@@ -124,15 +123,9 @@ public class SingleObjective {
            System.out.println(current_best_score);
         }
 
-        // RETURN ACTION
+        // RETURN best Individual
         int bestIndex = getMaxIndex(population_fitness);
-        int[] bestAction = population.get(bestIndex).actions; 
-        Types.ACTIONS[] actions = new Types.ACTIONS[bestAction.length]; 
-
-        //Convert to actions
-        for (int i = 0; i < bestAction.length; i++) actions[i] = action_mapping.get(bestAction[i]);
-        
-        return actions;
+        return population.get(bestIndex);
     }
 
     //Creates a population of individuals with random actions

@@ -89,7 +89,7 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 0;
+		int gameIdx = 8;
 		int levelIdx = 0; 
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
@@ -106,14 +106,44 @@ public class Test {
 		double runningScore = 0;
 		System.out.println("RUNNING");
 		
-		HashMap<Integer, Types.ACTIONS> action_mapping = new HashMap<>();
+		//Levels: Bomber, Boulder-Chase, Chase, Garbage Collector
+		int[] gameIdxs = {8, 10, 18, 45};
 
-		//Get initial game state and stateObs
-		Game gameInstance = ArcadeMachine.runOneGame2(game, levelZero, visuals, theController, recordActionsFile, seed, 0);
-		StateObservation stateObs = gameInstance.getObservation();
-		
-		SingleObjective runController = new SingleObjective(stateObs);
-		runController.act(stateObs);
+		// //Get initial game state and stateObs
+		// Game gameInstance = ArcadeMachine.runOneGame2(game, levelZero, visuals, theController, recordActionsFile, seed, 0);
+		// StateObservation stateObs = gameInstance.getObservation();
+		// //Run controller
+		// SingleObjective runController = new SingleObjective(stateObs);
+		// runController.act(stateObs);
+
+		//Loop over each game
+		for(int i = 0; i < gameIdxs.length; i++) {
+			String currentGame = (games[gameIdxs[i]])[0]; 
+			String currentGameName = (games[gameIdxs[i]])[1];
+			String fileContent = "";
+			//Create file for game
+
+
+			//Loop over each level
+			for(int lvlIdx = 0; lvlIdx <= 4; lvlIdx++) {
+				String currentLvl = currentGame.replace(currentGameName, currentGameName + "_lvl" + lvlIdx);
+				
+				Double[] best_scores = new Double[10];
+				//Loop each level 10 times
+				for(int runs = 0; runs < 10; runs++) {
+
+					//Get initial game state, stateObs and then Run Controller
+					Game gameInstance = ArcadeMachine.runOneGame2(game, currentLvl, visuals, theController, recordActionsFile, seed, 0);
+					StateObservation stateObs = gameInstance.getObservation();
+					SingleObjective runController = new SingleObjective(stateObs);
+					
+					//Potential return array [Mean, SD, Mean, SD, Mean, SD] for each level
+					Individual best = runController.act(stateObs);
+					best_scores[runs] = best.value;
+				}
+			}
+
+		}
 
         // for(int i = 0; i < 5; i++) {
 		// 	System.out.println(i);
