@@ -7,6 +7,11 @@ public class Individual implements Comparable {
     public int[] actions; // actions in individual. length of individual = actions.length
     public int nLegalActions; // number of legal actions
     public double value;
+    public Double crowding_distance;
+    public int domination_count;
+    public ArrayList<Individual> dominated_solutions;
+    public int rank;
+    public int objectives;
     private Random gen;
 
     //Initialise individual
@@ -17,6 +22,11 @@ public class Individual implements Comparable {
         }
         this.nLegalActions = nLegalActions;
     }   
+
+    public boolean dominates(Individual other_individual) {
+
+        return true;
+    }
 
     //Set individuals actions
     public void setActions (int[] a) {

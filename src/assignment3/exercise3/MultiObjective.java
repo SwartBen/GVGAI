@@ -1,6 +1,5 @@
 package assignment3.exercise3;
 
-
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types;
@@ -13,6 +12,12 @@ import java.util.*;
 
 public class MultiObjective {
 
+    //NSGA-II variables
+
+    private Population population, next_population;
+    //private ArrayList<Individual> returned_population;
+
+    
     // Parameters
     private int calltoAdvance;
     private int POPULATION_SIZE = 20;
@@ -23,7 +28,6 @@ public class MultiObjective {
     public static final double epsilon = 1e-6;
 
     // Class vars
-    private ArrayList<Individual> population, next_population;
     private ArrayList<Double> population_fitness, next_population_fitness;
     private int N_ACTIONS;
     private HashMap<Integer, Types.ACTIONS> action_mapping;
@@ -52,99 +56,139 @@ public class MultiObjective {
         action_mapping.put(k, Types.ACTIONS.ACTION_NIL);
     }
 
-    public Types.ACTIONS[] act(StateObservation stateObs) {
+    public Types.ACTIONS[] evolve(StateObservation stateObs) {
 
         //Initialise population
         population = intialise_population();
 
-        //Calculate fitness of entire population
-        population_fitness = new ArrayList<Double>();
-        for (int i = 0; i < population.size(); i++)
-            population_fitness.add(evaluate(population.get(i), heuristic, stateObs));
+        //Fast non dominated sort 
+        fast_nondominated_sort(population);
+
+        //Calculate crowding distance
+        for (ArrayList<Individual> front : population.fronts)
+            calculate_crowding_distance(front);
+
+        //Get children
+        ArrayList<Individual> children = create_children(population.population);     
+
+        //Set new population to null
+        Population returned_population = null;
         
-        Individual current_best = population.get(getMaxIndex(population_fitness));
-        double current_best_score = evaluate(current_best, heuristic, stateObs);
-        //Loop over generations until termination conditon is met.
-        while (calltoAdvance < 5000000) {
+        //Until termination condition is met
+        while(calltoAdvance < 5000000) {
+            //add children to population
+            population.population.addAll(children);
 
-            System.out.println(calltoAdvance);
-            //Intialise next population
-            next_population = new ArrayList<Individual>();
-            next_population_fitness = new ArrayList<Double>();
+            //fast non dominated sort population
+            fast_nondominated_sort(population);
+            //Create new pop
+            Population new_population = new Population();
+            int front_count = 0;
 
-            //Elitism select
-            int elitismIndex = getMaxIndex(population_fitness);
-            Individual elitesmIndv = population.get(elitismIndex);
-            next_population.add(elitesmIndv);
-            next_population_fitness.add(evaluate(elitesmIndv, heuristic, stateObs));
-
-            //Iterate over population
-
-            for (int i = 1; i < population.size(); i++) {
-                //Parent Select - Tournament
-                Individual parent1 = tournament_select(population, population_fitness);
-                Individual parent2 = tournament_select(population, population_fitness);
-                while (parent2 == parent1)
-                    parent2 = tournament_select(population, population_fitness);
-
-                //Crossover - uniform
-                Individual child = uniform_crossover(parent1, parent2);
-
-                //Mutation - random
-                child = random_mutate(child);
-
-                next_population.add(child);
-                next_population_fitness.add(evaluate(child, heuristic, stateObs));
+            while (new_population.population.size() + population.fronts.get(front_count).size() <= POPULATION_SIZE) {
+                //calculate crowding distance
+                calculate_crowding_distance(population.fronts.get(front_count));
+                new_population.population.addAll(population.fronts.get(front_count));
+                front_count += 1;
             }
-            int temp_best_index = getMaxIndex(next_population_fitness);
-            Individual temp_best_indv = population.get(temp_best_index);
-            
-            //If best of population is worse set new best
-            if(current_best_score < evaluate(temp_best_indv, heuristic, stateObs)) {
-                current_best = next_population.get(temp_best_index);
-                current_best_score = current_best.value;
-            } 
+            calculate_crowding_distance(population.fronts.get(front_count));
 
-            //Add one to actions array
-            this.SIMULATION_DEPTH = SIMULATION_DEPTH + 1;
-            for (int i = 0; i < POPULATION_SIZE; i++) {
-                //get individual
-                Individual indv = next_population.get(i);
+            //fronts[front_count].sort(key=lambda individual: individual.crowding_distance, reverse=True)
+            //new_population.extend(fronts[front_num][0:POPULATION_SIZE-new_population.length])
+            returned_population = new_population;
+            population = new_population;
+            fast_nondominated_sort(population);
 
-                indv.addOneAction(indv.actions, N_ACTIONS, randomGenerator);
-                //add a move
-                next_population_fitness.set(i, evaluate(indv, heuristic, stateObs));
-            }
+            for (ArrayList<Individual> front : population.fronts) 
+                calculate_crowding_distance(front);
             
-            
-            //Set next population to current
-            population = next_population;
-            population_fitness = next_population_fitness;
-
-           System.out.println(current_best_score);
+            children = create_children(population.population);
         }
 
-        // RETURN ACTION
-        int bestIndex = getMaxIndex(population_fitness);
-        int[] bestAction = population.get(bestIndex).actions; 
-        Types.ACTIONS[] actions = new Types.ACTIONS[bestAction.length]; 
-
-        //Convert to actions
-        for (int i = 0; i < bestAction.length; i++) actions[i] = action_mapping.get(bestAction[i]);
-        
-        return actions;
+        //return returned_population.fronts[0];
+        Types.ACTIONS returnVal[] = {Types.ACTIONS.ACTION_NIL};
+        return returnVal;
     }
 
     //Creates a population of individuals with random actions
-    private ArrayList<Individual> intialise_population() {
+    private Population intialise_population() {
 
-        population = new ArrayList<Individual>();
+        population = new Population();
 
         for (int i = 0; i < POPULATION_SIZE; i++) 
-            population.add(new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator));
+            population.population.add(new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator));
         
         return population;
     }
+
+    private void fast_nondominated_sort(Population population) {
+        population.fronts.add( new ArrayList<Individual>());
+        for (Individual individual: population.population) {
+            individual.domination_count = 0;
+            individual.dominated_solutions = new ArrayList<Individual>();
+            
+            for(Individual other_individual: population.population) {
+                if(individual.dominates(other_individual)) {
+                    individual.dominated_solutions.add(other_individual);
+                }
+                else if (other_individual.dominates(individual)) {
+                    individual.domination_count += 1;
+                }
+            }
+            if(individual.domination_count == 0) {
+                individual.rank = 0;
+                population.fronts.get(0).add(individual);
+            }
+        }
+        int i = 0;
+        while(population.fronts.get(i).size() > 0) {
+            ArrayList<Individual> temp = new ArrayList<Individual>();
+            for(Individual individual: population.fronts.get(i)) {
+                for (Individual other_individual: individual.dominated_solutions) {
+                    other_individual.domination_count -= 1;
+                    if (other_individual.domination_count == 0) {
+                        other_individual.rank = i+1;
+                        temp.add(other_individual);
+                    }
+                }
+                i = i+1;
+                population.fronts.add(temp);
+            }
+        }
+    }
+
+    private void calculate_crowding_distance(ArrayList<Individual> front) {
+        if (front.size() > 0) {
+            int solutions_num = front.size();
+            for (Individual individual: front) {
+                individual.crowding_distance = 0;
+
+                for (int m = 0; m < (front.get(0).objectives).size(); m++) {
+                    //front.sort(key=lambda individual: individual.objectives[m]);
+                    front.get(0).crowding_distance = Math.pow(10,9);
+                    front.get(solutions_num-1).crowding_distance = Math.pow(10,9);
+                    
+                    ArrayList<Integer> m_values = new ArrayList<Integer>();
+                    
+                    for(Individual indv : front) {
+                        m_values.add(indv.objectives.get(m));
+                    }
+                   
+                    int scale = Collections.max(m_values) - Collections.min(m_values);
+                    
+                    if (scale == 0) 
+                        scale = 1;
+
+                    for (int i = 1; i < solutions_num-1; i++)
+                        front.get(i).crowding_distance += (front.get(i+1).objectives[m] - front.get(i-1).objectives[m])/scale;
+                }
+            }
+        }
+    }
+
+
+
+
 
     /**
      * Evaluates an individual by rolling the current state with the actions in the individual
@@ -191,7 +235,7 @@ public class MultiObjective {
     }
 
     //Crossover method. Splits parent action arrays. Child is comprised of part of the mum, and part of the dad.
-    private Individual one_point_crossover(Individual mum, Individual dad, StateObservation state) {
+    private Individual[] one_point_crossover(Individual mum, Individual dad) {
         Individual child1 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
         Individual child2 = new Individual(SIMULATION_DEPTH, N_ACTIONS, randomGenerator);
 
@@ -206,11 +250,8 @@ public class MultiObjective {
                 child2.actions[i] = mum.actions[i];
         }
 
-        //Returns best child
-        if (evaluate(child1, heuristic, state) > evaluate(child2, heuristic, state))
-            return child1;
-        else 
-            return child2;
+        Individual[] returnVal = {child1, child2};
+        return returnVal;
     }
 
     //Crossover method. Selects two points to split the mum and dad array.
@@ -267,12 +308,31 @@ public class MultiObjective {
             return child2;
     }
 
+    public ArrayList<Individual> create_children(ArrayList<Individual> population) {
+        ArrayList<Individual> children = new ArrayList<Individual>();
+
+        while(children.size() < population.size()) {
+            Individual parent1 = tournament_select(population);
+            Individual parent2 = tournament_select(population);
+            while(parent1==parent2)
+                parent2 = tournament_select(population);
+
+            Individual[] child = one_point_crossover(parent1, parent2);
+            swap_mutate(child[0]);
+            swap_mutate(child[1]);
+            calculate_objectives(child[0]);
+            calculate_objectives(child[1]);
+            children.add(child[0]);
+            children.add(child[1]);
+        }
+        return children;
+    }
+
     //Parent selection method => Tournament select
     //Selects 3 random individuals from population. Best individual returned for breeding.
-    private Individual tournament_select(ArrayList<Individual> population, ArrayList<Double> population_fitness) {
+    private Individual tournament_select(ArrayList<Individual> population) {
 
         ArrayList<Individual> tournament = new ArrayList<>();
-        ArrayList<Double> tournament_fitness = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
             int index = randomGenerator.nextInt(population.size());

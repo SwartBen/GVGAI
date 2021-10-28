@@ -51,7 +51,7 @@ public class SingleObjective {
         action_mapping.put(k, Types.ACTIONS.ACTION_NIL);
     }
 
-    public Individual act(StateObservation stateObs) {
+    public Individual evolve(StateObservation stateObs) {
 
         //Initialise population
         population = intialise_population();

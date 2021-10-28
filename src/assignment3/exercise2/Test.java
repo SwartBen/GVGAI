@@ -138,7 +138,7 @@ public class Test {
 					SingleObjective runController = new SingleObjective(stateObs);
 					
 					//Potential return array [Mean, SD, Mean, SD, Mean, SD] for each level
-					Individual best = runController.act(stateObs);
+					Individual best = runController.evolve(stateObs);
 					best_scores[runs] = best.value;
 				}
 			}

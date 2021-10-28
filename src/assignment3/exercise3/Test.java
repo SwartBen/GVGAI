@@ -113,7 +113,7 @@ public class Test {
 		StateObservation stateObs = gameInstance.getObservation();
 		
 		MultiObjective runController = new MultiObjective(stateObs);
-		runController.act(stateObs);
+		runController.evolve(stateObs);
 
         // for(int i = 0; i < 5; i++) {
 		// 	System.out.println(i);
